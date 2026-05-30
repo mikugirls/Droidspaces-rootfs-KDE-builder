@@ -154,7 +154,6 @@ jobs:
         with:
           name: ${{ matrix.template }}-rootfs
           path: "*.tar.xz"
-          retention-days: 1
 
   # --------------------------------------------------------
   # 阶段 3: release (汇总发布)

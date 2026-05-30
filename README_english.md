@@ -15,7 +15,7 @@ When triggering the workflow, you can freely configure the target system version
   · conc – Lightweight edition
   · min – Minimal build
   · none – Command‑line only (no desktop)
-· Flexible PulseAudio forwarding – Supports tcp (network forwarding) and socket (socket) modes.
+· Flexible PulseAudio forwarding – Supports [tcp (network forwarding)](https://raw.githubusercontent.com/mikugirls/Droidspaces-rootfs-KDE-builder/refs/heads/main/scripts/on_aaudio_tcp.sh) and [socket (socket)](https://raw.githubusercontent.com/mikugirls/Droidspaces-rootfs-KDE-builder/refs/heads/main/scripts/on_aaudio_socket.sh) modes.
     The socket mode is strongly recommended: it relies on local file transfer for higher efficiency and lower latency.
 · Native Chinese localization – One‑click Chinese language environment setup with automatic timezone calibration, completely solving Chinese display and configuration headaches inside the container.
 · Snapdragon GPU hardware acceleration – Built‑in Mesa driver enhancements for Qualcomm Snapdragon GPUs, delivering a smooth hardware‑accelerated desktop experience. [Driver upstream: lfdevs/mesa-for-android-container](https://github.com/lfdevs/mesa-for-android-container)

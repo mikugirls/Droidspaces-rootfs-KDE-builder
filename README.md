@@ -17,7 +17,7 @@
 
 
  - **灵活的音频转发 (PulseAudio)**：
-     - 支持 `tcp`（网卡转发）与 `socket`（套接字）模式。
+     - 支持 [`tcp`（网卡转发）](https://raw.githubusercontent.com/mikugirls/Droidspaces-rootfs-KDE-builder/refs/heads/main/scripts/on_aaudio_tcp.sh)与 [`socket`（套接字）](https://raw.githubusercontent.com/mikugirls/Droidspaces-rootfs-KDE-builder/refs/heads/main/scripts/on_aaudio_socket.sh)模式。
      - *强烈推荐使用 `socket` 模式*：依赖本地文件传输，效率更高、延迟更低。
 
 
@@ -72,11 +72,12 @@
 
 ```
 
-**方法三：宽容内核 (Permissive Kernel)** 
+**方法三：宽容内核 (Permissive Kernel)**
 
 直接将设备的 SELinux 状态切换为 Permissive（宽容模式）。
 
 **方法四：修改 Droidspaces 模块配置文件**
+
 修改设备中 `/data/adb/modules/droidspaces/etc/droidspaces.te` 文件：
 
 ```text

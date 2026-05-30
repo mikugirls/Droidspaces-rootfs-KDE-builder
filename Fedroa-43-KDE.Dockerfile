@@ -18,7 +18,7 @@ ARG ENABLE_tmoe_ARG
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN dnf install -y --setopt=install_weak_deps=False \
-    # 核心工具组件 
+    # 核心工具组件
     bash jq dialog coreutils file findutils grep sed gawk curl wget ca-certificates bash-completion systemd-udev dbus-daemon systemd systemd-resolved fastfetch \
     # 用户请求的基础开发/编辑工具
     git nano sudo \
@@ -45,7 +45,7 @@ RUN dnf install -y --setopt=install_weak_deps=False \
         kf6-kimageformats plasma-browser-integration libcanberra-gtk3 gstreamer1-plugins-base gstreamer1-plugins-good sound-theme-freedesktop chromium plasma-workspace plasma-workspace-x11 kwin-x11; \
     fi && \
     ######################################################################################################
-    # 输入法 fcitx5 (可选)
+    #输入法 fcitx5 (可选)
     if [ "$ENABLE_srf_ARG" = "true" ]; then \
         dnf install -y  fcitx5 fcitx5-qt fcitx5-gtk ; \
     fi && \
@@ -62,7 +62,7 @@ RUN dnf install -y --setopt=install_weak_deps=False \
         dnf install -y --setopt=install_weak_deps=False \
         zip unzip p7zip p7zip-plugins bzip2 xz tar gzip; \
     fi && \
-    ## docker (可选) 
+    ## docker (可选)
     if [ "$ENABLE_docker_ARG" = "true" ]; then \
         dnf install -y --setopt=install_weak_deps=False \
         moby-engine docker-compose docker-cli; \
@@ -99,7 +99,7 @@ RUN if [ "$ENABLE_zh_tz_ARG" = "true" ]; then \
     sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
     # 删除默认可能存在的用户并创建新用户
     (userdel -r debian 2>/dev/null || true) && \
-    useradd -m -s /bin/bash Gold && echo "Gold:1234" | chpasswd 
+    useradd -m -s /bin/bash miku && echo "miku:1234" | chpasswd
 
 # 添加环境变量
 RUN cat <<'EOF' > /etc/environment
@@ -123,8 +123,8 @@ RUN if [ "$PulseAudio" = "socket" ]; then \
 # 输入法开机自启动
 RUN <<'EOF_RUN'
     if [ "$ENABLE_srf_ARG" = "true" ]; then
-    mkdir -p /home/Gold/.config/autostart
-    cat <<'EOF' > /home/Gold/.config/autostart/fcitx5.desktop
+    mkdir -p /home/miku/.config/autostart
+    cat <<'EOF' > /home/miku/.config/autostart/fcitx5.desktop
 [Desktop Entry]
 Name=Fcitx5
 GenericName=Input Method
@@ -138,15 +138,15 @@ StartupNotify=false
 NoDisplay=true
 EOF
 fi
-    echo 'export XDG_RUNTIME_DIR=/run/user/$(id -u)' >> /home/Gold/.bashrc
+    echo 'export XDG_RUNTIME_DIR=/run/user/$(id -u)' >> /home/miku/.bashrc
     if [ "$BUILD_KDE" = "min" ] || [ "$BUILD_KDE" = "conc" ] ; then
-    mkdir -p /home/Gold/.config 
-    cat <<'EOF' > /home/Gold/.config/kwinrc
+    mkdir -p /home/miku/.config 
+    cat <<'EOF' > /home/miku/.config/kwinrc
 [Compositing]
 Enabled=false
 EOF
     fi
-    chown -R Gold:Gold /home/Gold
+    chown -R miku:miku /home/miku
 EOF_RUN
 
 # 注意：这里将 debian_trixie 改为了 fedora_43。如果上游仓库没有提供 Fedora 版本的构建，这里会失败报错。
@@ -183,14 +183,16 @@ EOF
 RUN <<'EOF_RUN'
 
 # --- 1. 常规兼容性修复 ---
+# 建立 Android 网络权限组（在 Android 内核上运行 Linux 容器时，必须有这些 GID 才能正常访问网络 socket）
 grep -q '^aid_inet:' /etc/group     || echo 'aid_inet:x:3003:'    >> /etc/group
 grep -q '^aid_net_raw:' /etc/group || echo 'aid_net_raw:x:3004:' >> /etc/group
 grep -q '^aid_net_admin:' /etc/group || echo 'aid_net_admin:x:3005:' >> /etc/group
 
+# 检查并创建 droidspaces-gpu 组
 getent group droidspaces-gpu >/dev/null || groupadd -g 786 -r droidspaces-gpu
-
+# 为 root 用户赋予访问 Android 硬件及网络的权限组
 usermod -a -G aid_inet,aid_net_raw,input,video,tty,droidspaces-gpu root || true
-usermod -a -G aid_inet,aid_net_raw,input,video,tty,wheel,droidspaces-gpu Gold || true
+usermod -a -G aid_inet,aid_net_raw,input,video,tty,wheel,droidspaces-gpu miku || true
 
 # 确保未来通过 useradd 创建的新用户也会进入附加组 (Fedora 通过 /etc/default/useradd 处理)
 if [ -f /etc/default/useradd ]; then
@@ -199,9 +201,11 @@ if [ -f /etc/default/useradd ]; then
 fi
 
 # --- 2. 针对 Systemd 的特定修复 ---
+# 屏蔽在 Android 内核下容易引发报错或死锁的阻塞服务
 ln -sf /dev/null /etc/systemd/system/systemd-networkd-wait-online.service
 ln -sf /dev/null /etc/systemd/system/systemd-journald-audit.socket
 
+# 优化 Journald 日志配置（跳过内核审计、KMsg 等 Android 内核不兼容或权限受限的日志源）
 cat >> /etc/systemd/journald.conf << 'EOT'
 [Journal]
 ReadKMsg=no
@@ -237,6 +241,7 @@ else
     done
 fi
 
+# 在 systemd-logind 中禁用电源键行为处理（防止容器误拦截或处理宿主机的实体电源按键事件）
 mkdir -p /etc/systemd/logind.conf.d
 cat > /etc/systemd/logind.conf.d/99-power-key.conf << 'EOF'
 [Login]
@@ -248,6 +253,7 @@ HandlePowerKeyLongPressHibernate=ignore
 EOF
 
 # 应用 udev 覆盖配置
+# 1. 触发器覆盖：限制 udevadm trigger 的扫描范围（防止冷插拔时全面扫描 Android 宿主机硬件导致卡死或冲突）
 mkdir -p /etc/systemd/system/systemd-udev-trigger.service.d
 cat > /etc/systemd/system/systemd-udev-trigger.service.d/override.conf << 'EOF'
 [Service]
