@@ -13,10 +13,10 @@ on:
           - 'Ubuntu-24-XFCE'
           - 'all'
       custom_username:
-        description: '自定义用户名（默认 Gold）'
+        description: '自定义用户名（默认 miku）'
         required: false
         type: string
-        default: 'Gold'
+        default: 'miku'
       build_XFCE:
         description: 'XFCE桌面选择(conc-精简 none-不用XFCE)'
         required: true
@@ -200,7 +200,7 @@ jobs:
           build_XFCE_plus="${{ github.event.inputs.build_XFCE_plus }}"
           if [ "$PA_CHOICE" != "none" ] && [ "$build_XFCE_plus" = "false" ]; then
             cp "scripts/on_aaudio_${PA_CHOICE}.sh" "release_assets/on_aaudio_${PA_CHOICE}.sh"
-            sed -i "s/USERNAME=\"Gold\"/USERNAME=\"${CUSTOM_USERNAME}\"/g" "release_assets/on_aaudio_${PA_CHOICE}.sh"
+            sed -i "s/USERNAME=\"miku\"/USERNAME=\"${CUSTOM_USERNAME}\"/g" "release_assets/on_aaudio_${PA_CHOICE}.sh"
           fi
           
       - name: 创建统一 Release

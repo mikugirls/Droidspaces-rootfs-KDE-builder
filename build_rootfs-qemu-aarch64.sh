@@ -28,7 +28,7 @@ while getopts "i:v:K:L:P:a:b:c:d:e:f:g:h:j:u:" opt; do
   esac
 done
 
-: "${USERNAME:=Gold}"
+: "${USERNAME:=miku}"
 
 # 校验：检查是否传递了 Dockerfile 模板文件
 if [ -z "$DOCKERFILE" ]; then
