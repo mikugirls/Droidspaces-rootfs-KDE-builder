@@ -33,7 +33,7 @@ When triggering the workflow, you can freely configure the target system version
   - **Productivity tools**: Optional integration of development toolchains, compression utilities, and the Docker engine.
 - **anland_kde support** : Special support for Wayland, enabling direct communication with the anland display backend through patched KWin and Xwayland. Requires KDE desktop to be enabled. For detailed configuration, refer to the "📱 anland_kde Configuration" section below.  
   Upstream project: [anland](https://github.com/superturtlee/anland)
-- **Account Credentials**: For all built `Rootfs`, the username defaults to: `Gold` (can be customized in the workflow); the password is: `1234`
+- **Account Credentials**: For all built `Rootfs`, the username defaults to: `miku` (can be customized in the workflow); the password is: `1234`
 ## 🔥 Quick Start
 
 1. **Fork** this project to your GitHub repository.
