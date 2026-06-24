@@ -18,10 +18,10 @@ on:
           - 'all'
           - 'all-wayland'
       custom_username:
-        description: 'Custom username (default: Gold)'
+        description: 'Custom username (default: miku)'
         required: false
         type: string
-        default: 'Gold'
+        default: 'miku'
       build_KDE:
         description: 'KDE desktop choice (conc-compact, min-minimal, none-no KDE)'
         required: true
@@ -228,7 +228,7 @@ jobs:
           CUSTOM_USERNAME="${{ github.event.inputs.custom_username }}"
           if [ "$PA_CHOICE" != "none" ] && [ "$build_KDE_plus" = "false" ]; then
             cp "scripts/on_aaudio_${PA_CHOICE}.sh" "release_assets/on_aaudio_${PA_CHOICE}.sh"
-            sed -i "s/USERNAME=\"Gold\"/USERNAME=\"${CUSTOM_USERNAME}\"/g" "release_assets/on_aaudio_${PA_CHOICE}.sh"
+            sed -i "s/USERNAME=\"miku\"/USERNAME=\"${CUSTOM_USERNAME}\"/g" "release_assets/on_aaudio_${PA_CHOICE}.sh"
           fi
           
       - name: Create unified Release
