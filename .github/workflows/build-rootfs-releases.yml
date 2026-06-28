@@ -18,10 +18,10 @@ on:
           - 'all'
           - 'all-wayland'
       custom_username:
-        description: '自定义用户名（默认 Gold）'
+        description: '自定义用户名（默认 miku）'
         required: false
         type: string
-        default: 'Gold'
+        default: 'miku'
       build_KDE:
         description: 'KDE桌面选择(conc-精简 min-最小构造 none-不用KDE)'
         required: true
@@ -116,7 +116,7 @@ jobs:
       build_date: ${{ steps.prep.outputs.build_date }}
     steps:
       - name: 检出代码库
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: 解析用户的构建选择
         id: find-templates
@@ -263,7 +263,7 @@ jobs:
         template: ${{ fromJson(needs.setup.outputs.templates) }}
     steps:
       - name: 检出代码库
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.ref_name }}
 
@@ -297,7 +297,7 @@ jobs:
             -u "${{ inputs.custom_username }}"
 
       - name: 上传构建产物
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.template }}-rootfs
           path: "*.tar.xz"
@@ -314,7 +314,7 @@ jobs:
       contents: write
     steps:
       - name: 检出代码库
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         
       - name: 下载所有产物
         uses: actions/download-artifact@v7
@@ -331,7 +331,7 @@ jobs:
           build_KDE_plus="${{ github.event.inputs.build_KDE_plus }}"
           if [ "$PA_CHOICE" != "none" ] && [ "$build_KDE_plus" = "false" ]; then
             cp "scripts/on_aaudio_${PA_CHOICE}.sh" "release_assets/on_aaudio_${PA_CHOICE}.sh"
-            sed -i "s/USERNAME=\"Gold\"/USERNAME=\"${CUSTOM_USERNAME}\"/g" "release_assets/on_aaudio_${PA_CHOICE}.sh"
+            sed -i "s/USERNAME=\"miku\"/USERNAME=\"${CUSTOM_USERNAME}\"/g" "release_assets/on_aaudio_${PA_CHOICE}.sh"
           fi
           
       - name: 创建统一 Release
