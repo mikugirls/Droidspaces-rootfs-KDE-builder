@@ -26,7 +26,7 @@ COPY anland-build/Fedora43/xwayland/*.rpm /tmp/anland-build/Fedora43/xwayland/
 
 RUN dnf install -y --setopt=install_weak_deps=False \
     # 核心工具组件 
-    bash jq dialog coreutils file findutils grep sed gawk curl wget ca-certificates bash-completion systemd-udev dbus-daemon systemd systemd-resolved fastfetch \
+    bash jq dialog coreutils file findutils grep sed gawk curl wget ca-certificates bash-completion systemd-udev dbus-daemon systemd systemd-resolved fastfetch pciutils \
     # 用户请求的基础开发/编辑工具
     git nano sudo \
     # 网络与 SSH 工具
@@ -98,6 +98,10 @@ RUN if [ "$ENABLE_anland_kde_ARG" = "true" ] && ([ "$BUILD_KDE" = "min" ] || [ "
     else \
         rm -rf /tmp/anland-build; \
     fi
+
+# 修复骁龙8gen2设备在Wayland的花屏问题
+COPY scripts/enable_tp_ubwc.sh /etc/profile.d/enable_tp_ubwc.sh
+RUN chmod +x /etc/profile.d/enable_tp_ubwc.sh
 
 # 强制配置使用 iptables-legacy（兼容 Android 内核的硬性要求）
 RUN ln -sf /usr/sbin/iptables-legacy /usr/sbin/iptables && \

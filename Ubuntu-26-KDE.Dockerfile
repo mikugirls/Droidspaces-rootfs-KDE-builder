@@ -15,33 +15,47 @@ ARG ENABLE_docker_ARG
 ARG ENABLE_srf_ARG
 ARG ENABLE_tmoe_ARG
 ARG ENABLE_anland_kde_ARG
+ARG ENABLE_nosnap_ARG
 ARG USERNAME
 ######################################################
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN sed -i 's/Components: main/Components: main restricted universe multiverse/g' /etc/apt/sources.list.d/ubuntu.sources 2>/dev/null || \
-    sed -i 's/main/main restricted universe multiverse/g' /etc/apt/sources.list 2>/dev/null && \
-    apt-get update && \
-    apt-get upgrade -y
-
 # 优先复制自定义脚本
 COPY scripts/download-firmware /usr/local/bin/
+COPY scripts/nosnap.sh /usr/local/sbin/nosnap
 
 # 将自定义的 bashrc 脚本复制到根文件系统的 profile 目录
 COPY scripts/bashrc.sh /etc/profile.d/ds-aliases.sh
+
+# 修复骁龙8gen2设备在Wayland的花屏问题
+COPY scripts/enable_tp_ubwc.sh /etc/profile.d/enable_tp_ubwc.sh
 
 # 复制本仓库内预编译的 anland_kde deb 包
 COPY anland-build/ubuntu2604/kwin/*.deb /tmp/anland-build/ubuntu2604/kwin/
 COPY anland-build/ubuntu2604/xwayland/*.deb /tmp/anland-build/ubuntu2604/xwayland/
 
 # 赋予相关脚本可执行权限
-RUN chmod +x /usr/local/bin/download-firmware /etc/profile.d/ds-aliases.sh
+RUN chmod +x /usr/local/bin/download-firmware /usr/local/sbin/nosnap /etc/profile.d/ds-aliases.sh /etc/profile.d/enable_tp_ubwc.sh
+
+RUN sed -i 's/Components: main/Components: main restricted universe multiverse/g' /etc/apt/sources.list.d/ubuntu.sources 2>/dev/null || \
+    sed -i 's/main/main restricted universe multiverse/g' /etc/apt/sources.list 2>/dev/null && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates curl wget && \
+    if [ "$ENABLE_nosnap_ARG" = "true" ]; then \
+        echo "--> [开启] nosnap: 正在预配置并移除 Ubuntu Snap..." && \
+        bash /usr/local/sbin/nosnap; \
+    else \
+        echo "--> [跳过] 未开启 nosnap"; \
+    fi && \
+    rm -f /usr/local/sbin/nosnap && \
+    apt-get update && \
+    apt-get upgrade -y
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     # 核心工具组件
-    bash jq dialog coreutils file findutils grep sed gawk curl wget ca-certificates locales bash-completion udev dbus systemd-sysv systemd-resolved fastfetch \
+    bash jq dialog coreutils file findutils grep sed gawk curl wget ca-certificates locales bash-completion udev dbus systemd-sysv systemd-resolved fastfetch pciutils \
     # 用户请求的基础开发/编辑工具
     git nano sudo \
     # 网络与 SSH 工具
@@ -71,8 +85,21 @@ RUN apt-get update && \
         kimageformat6-plugins plasma-browser-integration libcanberra-pulse gstreamer1.0-plugins-base gstreamer1.0-plugins-good sound-theme-freedesktop \
         polkit-kde-agent-1 libpam-systemd libpam-modules libpam-kwallet5 plasma-session-x11 language-pack-kde-zh-hans language-pack-zh-hans qt6-translations-l10n; \
     fi && \
+    # mobile版KDE
+    if [ "$BUILD_KDE" = "mobile" ]; then \
+        apt-get install -y --no-install-recommends \
+        dbus-x11 x11-xserver-utils fonts-noto-cjk fonts-noto-color-emoji wayland-utils xserver-xorg dbus-user-session \
+        plasma-nano plasma-mobile plasma-mobile-phone maliit-keyboard maliit-framework maliit-server-qt6 \
+        kwin-wayland pipewire pipewire-pulse wireplumber powerdevil plasma-pa upower pulseaudio-utils \
+        konsole dolphin kate kinfocenter mesa-utils vulkan-tools \
+        systemsettings plasma-systemmonitor kde-config-screenlocker kio-extras xdg-user-dirs \
+        dolphin-plugins ffmpegthumbs kdegraphics-thumbnailers kimageformat6-plugins plasma-settings angelfish \
+        gstreamer1.0-plugins-base gstreamer1.0-plugins-good sound-theme-freedesktop libcanberra-pulse \
+        polkit-kde-agent-1 libpam-systemd libpam-modules libpam-kwallet5 qml6-module-org-kde-kirigami qml6-module-qtquick-controls \
+        qml6-module-qtquick-layouts qml6-module-qtquick-templates language-pack-kde-zh-hans language-pack-zh-hans qt6-translations-l10n; \
+    fi && \
     ############################################## anland_kde(wayland) 支持 ################################################
-    if [ "$ENABLE_anland_kde_ARG" = "true" ] && ([ "$BUILD_KDE" = "min" ] || [ "$BUILD_KDE" = "conc" ]); then \
+    if [ "$ENABLE_anland_kde_ARG" = "true" ] && [ "$BUILD_KDE" != "none" ]; then \
         echo "--> [开启] 正在安装 anland_kde..." && \
         echo "--> [开启] 正在安装预编译的 kwin deb 包..." && \
         dpkg -i /tmp/anland-build/ubuntu2604/kwin/*.deb || apt-get install -f -y && \
@@ -155,7 +182,7 @@ RUN cat <<'EOF' > /etc/environment
 XCURSOR_SIZE=48
 EOF
 # wayland 显示服务器环境变量配置
-RUN if [ "$ENABLE_anland_kde_ARG" != "true" ]; then \
+RUN if [ "$ENABLE_anland_kde_ARG" != "true" ] ; then \
         echo "DISPLAY=:5" >> /etc/environment; \
     else \
         echo "WAYLAND_DISPLAY=wayland-0" >> /etc/environment; \
@@ -224,7 +251,7 @@ EOF
     fi
     chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}
     # KDE X11 自启动
-    if [ "$BUILD_KDE_plus" = "true" ] && [ "$ENABLE_anland_kde_ARG" = "false" ] ; then
+    if [ "$BUILD_KDE_plus" = "true" ] && [ "$ENABLE_anland_kde_ARG" = "false" ] && [ "$BUILD_KDE" != "mobile" ] ; then
     cat <<EOF > /etc/systemd/system/plasma-x11.service
 [Unit]
 Description=Start Plasma X11
@@ -243,8 +270,31 @@ EOF
     mkdir -p /etc/systemd/system/multi-user.target.wants
     ln -sf /etc/systemd/system/plasma-x11.service /etc/systemd/system/multi-user.target.wants/plasma-x11.service
     fi
+    # KDE mobile 自启动
+    if [ "$BUILD_KDE_plus" = "true" ] && [ "$BUILD_KDE" = "mobile" ] ; then
+    cat <<EOF > /etc/systemd/system/plasma-mobile.service
+[Unit]
+Description=Start Plasma Mobile
+After=network.target display-manager.service
+
+[Service]
+Type=simple
+User=${USERNAME}
+Group=${USERNAME}
+PAMName=login
+
+EnvironmentFile=-/etc/environment
+ExecStart=/bin/bash -lc 'startplasmamobile'
+Restart=no
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    mkdir -p /etc/systemd/system/multi-user.target.wants
+    ln -sf /etc/systemd/system/plasma-mobile.service /etc/systemd/system/multi-user.target.wants/plasma-mobile.service
+    fi
     # KDE wayland 自启动
-    if [ "$BUILD_KDE_plus" = "true" ] && [ "$ENABLE_anland_kde_ARG" = "true" ] ; then
+    if [ "$BUILD_KDE_plus" = "true" ] && [ "$ENABLE_anland_kde_ARG" = "true" ] && [ "$BUILD_KDE" != "mobile" ] ; then
     cat <<EOF > /etc/systemd/system/plasma-wayland.service
 [Unit]
 Description=Start Plasma Wayland
