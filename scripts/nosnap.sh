@@ -52,8 +52,8 @@ Package: snapd snapd-desktop-integration gnome-software-plugin-snap plasma-disco
 Pin: release a=*
 Pin-Priority: -10
 
-Package: *
-Pin: version *snap*
+Package: *snap*
+Pin: release a=*
 Pin-Priority: -10
 EOF
 
