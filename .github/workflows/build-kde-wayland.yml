@@ -24,7 +24,7 @@ on:
         description: 'anland 仓库地址（默认上游，可填你的 fork）'
         required: false
         type: string
-        default: 'https://github.com/superturtlee/anland.git'
+        default: 'https://github.com/mikugirls/anland.git'
       commit_changes:
         description: '构建成功后提交更新到本仓库'
         required: true
@@ -87,7 +87,7 @@ jobs:
 
     steps:
       - name: 检出本仓库
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -217,7 +217,7 @@ jobs:
           find "$DEST_DIR" -type f \( -name '*.deb' -o -name '*.rpm' -o -name '*.pkg.tar.zst' \) -print | sort
 
       - name: 上传构建产物
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: anland-pkgs-${{ matrix.target }}
           path: ${{ steps.target.outputs.dest }}
@@ -230,12 +230,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 检出本仓库
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: 下载构建产物
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           path: .anland-artifacts
           pattern: anland-pkgs-*

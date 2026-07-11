@@ -60,7 +60,7 @@ The main GitHub Actions inputs are:
 | Option | Values | Default | Description |
 | --- | --- | --- | --- |
 | Distribution to build (`build_target`) | Distribution target, `all`, `all-wayland` | `Debian-13-KDE` | Selects which RootFS target to build. |
-| Custom username (`custom_username`) | String | `Gold` | Default user inside the RootFS. The audio startup script in the Release is patched with this username. |
+| Custom username (`custom_username`) | String | `miku` | Default user inside the RootFS. The audio startup script in the Release is patched with this username. |
 | KDE desktop choice (`build_KDE`) | `conc`, `min`, `mobile`, `none` | `min` | KDE desktop size. `none` builds a command-line only RootFS. |
 | KDE desktop auto-start (`build_KDE_plus`) | `true`, `false` | `true` | Creates a systemd service to auto-start KDE. Requires a KDE mode other than `none`; turn it off when building `none`. |
 | Wayland support (`enable_anland_kde`) | `true`, `false` | `false` | Enables Wayland/Anland support. Supported only on Debian 13, Ubuntu 26, and Fedora 43. |
@@ -288,7 +288,7 @@ Default account settings:
 
 | Item | Default |
 | --- | --- |
-| Username | `Gold`, configurable through the workflow `custom_username` input |
+| Username | `miku`, configurable through the workflow `custom_username` input |
 | Password | `1234` |
 | Shell | `/bin/bash` |
 
@@ -298,12 +298,12 @@ Change the password after importing:
 passwd
 ```
 
-To rename the user after building, run the following as root. This example renames `Gold` to `NewUser`:
+To rename the user after building, run the following as root. This example renames `miku` to `NewUser`:
 
 ```bash
-usermod -l NewUser Gold
+usermod -l NewUser miku
 usermod -d /home/NewUser -m NewUser
-groupmod -n NewUser Gold
+groupmod -n NewUser miku
 passwd NewUser
 ```
 
@@ -336,7 +336,7 @@ chmod +x build_rootfs-native.sh
   -h false \
   -j true \
   -n false \
-  -u Gold \
+  -u miku \
   -A false
 ```
 
@@ -360,7 +360,7 @@ chmod +x build_rootfs-qemu-aarch64.sh
   -h true \
   -j true \
   -n true \
-  -u Gold \
+  -u miku \
   -A true
 ```
 

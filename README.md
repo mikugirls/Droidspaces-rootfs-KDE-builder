@@ -60,7 +60,7 @@ GitHub Actions 的主要输入项如下：
 | 选项 | 可选值 | 默认值 | 说明 |
 | --- | --- | --- | --- |
 | 选择要构建的发行版 (`build_target`) | 发行版目标、`all`、`all-wayland` | `Debian-13-KDE` | 选择要构建的 RootFS。 |
-| 自定义用户名 (`custom_username`) | 字符串 | `Gold` | RootFS 默认用户。Release 中的音频启动脚本会同步替换该用户名。 |
+| 自定义用户名 (`custom_username`) | 字符串 | `miku` | RootFS 默认用户。Release 中的音频启动脚本会同步替换该用户名。 |
 | KDE 桌面选择 (`build_KDE`) | `conc`、`min`、`mobile`、`none` | `min` | KDE 桌面规模。`none` 表示只构建命令行环境。 |
 | KDE 桌面开机自启动 (`build_KDE_plus`) | `true`、`false` | `true` | 是否创建 KDE 自启动 systemd 服务。需要已安装 KDE；选择 `none` 桌面时应关闭。 |
 | Wayland 支持 (`enable_anland_kde`) | `true`、`false` | `false` | 是否启用 Wayland/Anland 支持。只支持 Debian 13、Ubuntu 26 和 Fedora 43。 |
@@ -288,7 +288,7 @@ allow untrusted_app_27 droidspacesd fd use
 
 | 项目 | 默认值 |
 | --- | --- |
-| 用户名 | `Gold`，可通过 workflow 的 `custom_username` 修改 |
+| 用户名 | `miku`，可通过 workflow 的 `custom_username` 修改 |
 | 密码 | `1234` |
 | Shell | `/bin/bash` |
 
@@ -298,12 +298,12 @@ allow untrusted_app_27 droidspacesd fd use
 passwd
 ```
 
-如需在构建后手动修改用户名，请在 root 用户下执行。假设旧用户名为 `Gold`，新用户名为 `NewUser`：
+如需在构建后手动修改用户名，请在 root 用户下执行。假设旧用户名为 `miku`，新用户名为 `NewUser`：
 
 ```bash
-usermod -l NewUser Gold
+usermod -l NewUser miku
 usermod -d /home/NewUser -m NewUser
-groupmod -n NewUser Gold
+groupmod -n NewUser miku
 passwd NewUser
 ```
 
@@ -336,7 +336,7 @@ chmod +x build_rootfs-native.sh
   -h false \
   -j true \
   -n false \
-  -u Gold \
+  -u miku \
   -A false
 ```
 
@@ -360,7 +360,7 @@ chmod +x build_rootfs-qemu-aarch64.sh
   -h true \
   -j true \
   -n true \
-  -u Gold \
+  -u miku \
   -A true
 ```
 

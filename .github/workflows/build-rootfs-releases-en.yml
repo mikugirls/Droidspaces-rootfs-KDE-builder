@@ -19,10 +19,10 @@ on:
           - 'all'
           - 'all-wayland'
       custom_username:
-        description: 'Custom username (default: Gold)'
+        description: 'Custom username (default: miku)'
         required: false
         type: string
-        default: 'Gold'
+        default: 'miku'
       build_KDE:
         description: 'KDE desktop choice (conc-compact, min-minimal, mobile-mobile edition, none-no KDE)'
         required: true
@@ -123,7 +123,7 @@ jobs:
       build_date: ${{ steps.prep.outputs.build_date }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Parse user build choices
         id: find-templates
@@ -240,7 +240,7 @@ jobs:
             -f "ref=${{ github.ref_name }}" \
             -f "inputs[build_target]=$WAYLAND_PACKAGE_TARGET" \
             -f "inputs[anland_ref]=main" \
-            -f "inputs[anland_repo]=https://github.com/superturtlee/anland.git" \
+            -f "inputs[anland_repo]=https://github.com/mikugirls/anland.git" \
             -f "inputs[commit_changes]=true" \
             -f "inputs[request_id]=$REQUEST_ID"
 
@@ -285,7 +285,7 @@ jobs:
         template: ${{ fromJson(needs.setup.outputs.templates) }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.ref_name }}
 
@@ -320,7 +320,7 @@ jobs:
             -u "${{ inputs.custom_username }}"
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.template }}-rootfs
           path: "*.tar.xz"
@@ -337,7 +337,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         
       - name: Download all artifacts
         uses: actions/download-artifact@v7
@@ -354,7 +354,7 @@ jobs:
           build_KDE_plus="${{ github.event.inputs.build_KDE_plus }}"
           if [ "$PA_CHOICE" != "none" ] && [ "$build_KDE_plus" = "false" ]; then
             cp "scripts/on_aaudio_${PA_CHOICE}.sh" "release_assets/on_aaudio_${PA_CHOICE}.sh"
-            sed -i "s/USERNAME=\"Gold\"/USERNAME=\"${CUSTOM_USERNAME}\"/g" "release_assets/on_aaudio_${PA_CHOICE}.sh"
+            sed -i "s/USERNAME=\"miku\"/USERNAME=\"${CUSTOM_USERNAME}\"/g" "release_assets/on_aaudio_${PA_CHOICE}.sh"
           fi
           
       - name: Create unified Release
