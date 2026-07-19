@@ -40,9 +40,11 @@ COPY scripts/download-firmware /usr/local/bin/
 # 将自定义的 bashrc 脚本复制到根文件系统的 profile 目录
 COPY scripts/bashrc.sh /etc/profile.d/ds-aliases.sh
 
+# 通用 Droidspaces USB Manager 安装器
+COPY scripts/install-usb-manager.sh /usr/local/sbin/install-droidspaces-usb-manager
+
 # 复制本仓库内预编译的 anland_kde deb 包
-COPY anland-build/Debian13/kwin/*.deb /tmp/anland-build/Debian13/kwin/
-COPY anland-build/Debian13/xwayland/*.deb /tmp/anland-build/Debian13/xwayland/
+COPY anland-build/Debian13/*.deb /tmp/anland-build/Debian13/
 
 # 赋予相关脚本可执行权限
 RUN chmod +x /usr/local/bin/download-firmware /etc/profile.d/ds-aliases.sh
@@ -96,11 +98,9 @@ RUN apt-get update && \
     if [ "$ENABLE_anland_kde_ARG" = "true" ] && ([ "$BUILD_KDE" = "min" ] || [ "$BUILD_KDE" = "conc" ] || [ "$BUILD_KDE" = "mobile" ]); then \
         echo "--> [开启] 正在安装 anland_kde..." && \
         echo "--> [开启] 正在安装预编译的 kwin deb 包..." && \
-        dpkg -i /tmp/anland-build/Debian13/kwin/*.deb || apt-get install -f -y && \
-        echo "--> [开启] 正在安装预编译的 xwayland deb 包..." && \
-        dpkg -i /tmp/anland-build/Debian13/xwayland/*.deb || apt-get install -f -y && \
+        dpkg -i /tmp/anland-build/Debian13/*.deb || apt-get install -f -y && \
         echo "--> [开启] 设置预编译 deb 包为 hold 模式，防止被 apt 更新覆盖..." && \
-        for f in /tmp/anland-build/Debian13/kwin/*.deb /tmp/anland-build/Debian13/xwayland/*.deb; do \
+        for f in /tmp/anland-build/Debian13/*.deb; do \
             pkgname=$(dpkg-deb -f "$f" Package) && \
             apt-mark hold "$pkgname" && \
             echo "    hold: $pkgname"; \
@@ -168,6 +168,9 @@ RUN sed -i '/en_US.UTF-8/s/^# //' /etc/locale.gen && \
     # 如果容器内存在默认的 debian 用户，则将其连同家目录一起删除
     deluser --remove-home debian || true && \
     useradd -m -s /bin/bash ${USERNAME} && echo "${USERNAME}:1234" | chpasswd 
+
+# 为所有 Debian RootFS 安装 Droidspaces USB Manager
+RUN /usr/local/sbin/install-droidspaces-usb-manager --user "${USERNAME}"
 
 # 添加环境变量
 RUN cat <<'EOF' > /etc/environment
