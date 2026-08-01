@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-readonly REPO_ARCHIVE_URL="https://github.com/Goldzxcbug/Droidspaces-rootfs-KDE-builder/archive/refs/heads/main.tar.gz"
+readonly REPO_ARCHIVE_URL="https://github.com/mikugirls/Droidspaces-rootfs-KDE-builder/archive/refs/heads/main.tar.gz"
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" 2>/dev/null && pwd -P || true)"
 WORK_DIR=""
 UI_LANG="en"

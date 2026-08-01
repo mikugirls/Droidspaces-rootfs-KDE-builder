@@ -65,7 +65,7 @@ GitHub Actions 的主要输入项如下：
 | 选项 | 可选值 | 默认值 | 说明 |
 | --- | --- | --- | --- |
 | 选择要构建的发行版 (`build_target`) | 发行版目标、`all`、`all-wayland` | `Debian-13-KDE` | 选择要构建的 RootFS。 |
-| 自定义用户名 (`custom_username`) | 字符串 | `Gold` | RootFS 默认用户。Release 中的音频启动脚本会同步替换该用户名。 |
+| 自定义用户名 (`custom_username`) | 字符串 | `miku` | RootFS 默认用户。Release 中的音频启动脚本会同步替换该用户名。 |
 | KDE 桌面选择 (`build_KDE`) | `conc`、`min`、`mobile`、`none` | `min` | KDE 桌面规模。`none` 表示只构建命令行环境。 |
 | KDE 桌面开机自启动 (`build_KDE_plus`) | `true`、`false` | `true` | 是否创建 KDE 自启动 systemd 服务。需要已安装 KDE；选择 `none` 桌面时应关闭。 |
 | Wayland 支持 (`enable_anland_kde`) | `true`、`false` | `false` | 是否启用 Wayland/Anland 支持。支持 Debian 13、Ubuntu 26、Fedora 43 和 Fedora 44。 |
@@ -326,7 +326,7 @@ chmod +x build_rootfs-native.sh
   -n false \
   -S false \
   -t false \
-  -u Gold \
+  -u miku \
   -A false
 ```
 
@@ -352,7 +352,7 @@ chmod +x build_rootfs-qemu-aarch64.sh
   -n true \
   -S false \
   -t false \
-  -u Gold \
+  -u miku \
   -A true
 ```
 

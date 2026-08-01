@@ -65,7 +65,7 @@ The main GitHub Actions inputs are:
 | Option | Values | Default | Description |
 | --- | --- | --- | --- |
 | Distribution to build (`build_target`) | Distribution target, `all`, `all-wayland` | `Debian-13-KDE` | Selects which RootFS target to build. |
-| Custom username (`custom_username`) | String | `Gold` | Default user inside the RootFS. The audio startup script in the Release is patched with this username. |
+| Custom username (`custom_username`) | String | `miku` | Default user inside the RootFS. The audio startup script in the Release is patched with this username. |
 | KDE desktop choice (`build_KDE`) | `conc`, `min`, `mobile`, `none` | `min` | KDE desktop size. `none` builds a command-line only RootFS. |
 | KDE desktop auto-start (`build_KDE_plus`) | `true`, `false` | `true` | Creates a systemd service to auto-start KDE. Requires a KDE mode other than `none`; turn it off when building `none`. |
 | Wayland support (`enable_anland_kde`) | `true`, `false` | `false` | Enables Wayland/Anland support on Debian 13, Ubuntu 26, Fedora 43, and Fedora 44. |
@@ -326,7 +326,7 @@ chmod +x build_rootfs-native.sh
   -n false \
   -S false \
   -t false \
-  -u Gold \
+  -u miku \
   -A false
 ```
 
@@ -352,7 +352,7 @@ chmod +x build_rootfs-qemu-aarch64.sh
   -n true \
   -S false \
   -t false \
-  -u Gold \
+  -u miku \
   -A true
 ```
 
