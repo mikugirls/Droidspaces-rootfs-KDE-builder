@@ -59,21 +59,35 @@ detect_target() {
     # shellcheck disable=SC1091
     source /etc/os-release
     [[ -n "${ID:-}" ]] || die "/etc/os-release 缺少 ID。" "/etc/os-release does not contain ID."
-    [[ -n "${VERSION_ID:-}" ]] || die "/etc/os-release 缺少 VERSION_ID。" "/etc/os-release does not contain VERSION_ID."
+    local distro_id="${ID,,}"
+    local version_id="${VERSION_ID:-}"
+    local system_name="${PRETTY_NAME:-$distro_id${version_id:+ $version_id}}"
 
-    case "${ID}:${VERSION_ID}" in
-        debian:13*) TARGET="Debian13"; PACKAGE_TYPE="deb" ;;
-        ubuntu:26.04*) TARGET="ubuntu2604"; PACKAGE_TYPE="deb" ;;
-        fedora:43*) TARGET="Fedora43"; PACKAGE_TYPE="rpm" ;;
-        fedora:44*) TARGET="Fedora44"; PACKAGE_TYPE="rpm" ;;
+    # Arch Linux ARM identifies itself as archarm and uses BUILD_ID=rolling;
+    # it normally has no VERSION_ID.  Keep the version requirement for the
+    # fixed-release Debian, Ubuntu, and Fedora package sets below.
+    case "$distro_id" in
+        arch|archarm)
+            TARGET="Arch"
+            PACKAGE_TYPE="pkg.tar.*"
+            ;;
         *)
-            die "不支持当前系统 ${PRETTY_NAME:-${ID} ${VERSION_ID}}。仅支持 Debian 13、Ubuntu 26.04、Fedora 43/44。" \
-                "Unsupported system: ${PRETTY_NAME:-${ID} ${VERSION_ID}}. Supported systems are Debian 13, Ubuntu 26.04, and Fedora 43/44."
+            [[ -n "$version_id" ]] || die "/etc/os-release 缺少 VERSION_ID。" "/etc/os-release does not contain VERSION_ID."
+            case "$distro_id:$version_id" in
+                debian:13*) TARGET="Debian13"; PACKAGE_TYPE="deb" ;;
+                ubuntu:26.04*) TARGET="ubuntu2604"; PACKAGE_TYPE="deb" ;;
+                fedora:43*) TARGET="Fedora43"; PACKAGE_TYPE="rpm" ;;
+                fedora:44*) TARGET="Fedora44"; PACKAGE_TYPE="rpm" ;;
+                *)
+                    die "不支持当前系统 ${system_name}。仅支持 Debian 13、Ubuntu 26.04、Fedora 43/44、Arch Linux。" \
+                        "Unsupported system: ${system_name}. Supported systems are Debian 13, Ubuntu 26.04, Fedora 43/44, and Arch Linux."
+                    ;;
+            esac
             ;;
     esac
 
-    log "已识别系统: ${PRETTY_NAME:-${ID} ${VERSION_ID}} -> ${TARGET}" \
-        "Detected system: ${PRETTY_NAME:-${ID} ${VERSION_ID}} -> ${TARGET}"
+    log "已识别系统: ${system_name} -> ${TARGET}" \
+        "Detected system: ${system_name} -> ${TARGET}"
 }
 
 check_architecture() {
@@ -189,6 +203,32 @@ install_rpm_packages() {
     printf '  hold: %s\n' "${packages[@]}"
 }
 
+install_arch_packages() {
+    local -a files packages
+    local pacman_conf
+
+    command -v pacman >/dev/null 2>&1 || die "未找到 pacman。" "pacman was not found."
+    mapfile -t files < <(find "$PACKAGE_DIR" -maxdepth 1 -type f -name '*.pkg.tar.*' -print | sort)
+    ((${#files[@]} > 0)) || die "没有可安装的 Arch 包。" "No installable Arch packages were found."
+
+    log "正在安装 ${#files[@]} 个 Arch 包..." "Installing ${#files[@]} Arch packages..."
+    pacman_conf="$(mktemp -t anland-pacman.XXXXXXXX)"
+    cp /etc/pacman.conf "$pacman_conf"
+    if grep -q '^#LocalFileSigLevel = Optional$' "$pacman_conf"; then
+        sed -i 's/^#LocalFileSigLevel = Optional$/LocalFileSigLevel = Optional/' "$pacman_conf"
+    else
+        printf '\n[options]\nLocalFileSigLevel = Optional\n' >> "$pacman_conf"
+    fi
+    pacman --config "$pacman_conf" -U --noconfirm "${files[@]}"
+    rm -f -- "$pacman_conf"
+
+    if ! grep -q '^IgnorePkg.*kwin' /etc/pacman.conf; then
+        sed -i '/^\[options\]$/a IgnorePkg = kwin xorg-xwayland' /etc/pacman.conf
+    fi
+    mapfile -t packages < <(pacman -Qq -p "${files[@]}" | sort -u)
+    printf '  hold: %s\n' "${packages[@]}"
+}
+
 main() {
     detect_language
     require_root "$@"
@@ -199,6 +239,7 @@ main() {
     case "$PACKAGE_TYPE" in
         deb) install_deb_packages ;;
         rpm) install_rpm_packages ;;
+        pkg.tar.*) install_arch_packages ;;
     esac
 
     log "安装完成，patched KWin/Xwayland 已锁定。" "Installation complete; patched KWin/Xwayland packages are now locked."
