@@ -223,19 +223,27 @@ startplasmamobile
 
 ## Wayland 和 Anland 配置
 
-Wayland 支持依赖 [anland](https://github.com/superturtlee/anland) 以及本仓库内的 patched KWin/Xwayland 预编译包。建议使用 `Ubuntu-26-KDE`，也可以使用 `Debian-13-KDE`、`Fedora-43-KDE`、`Fedora-44-KDE` 或 `Arch-KDE`。Arch 使用 `anland` 仓库中的 `producers/kde/Arch_v5/build.sh` 在 ARM64 Arch 容器内重建包。
+Wayland 支持依赖 [anland](https://github.com/superturtlee/anland) 和 GitHub Releases 中的 patched KWin/Xwayland 预编译包。建议使用 `Ubuntu-26-KDE`，也可以使用 `Debian-13-KDE`、`Fedora-43-KDE`、`Fedora-44-KDE` 或 `Arch-KDE`。Arch 使用 `anland` 仓库中的 `producers/kde/Arch_v5/build.sh` 在 ARM64 Arch 容器内重建包。
 
-### 一键安装 anland-build 包
+### 一键安装 Anland KDE Release 包
 
-`anland-build/install.sh` 会自动识别当前发行版，安装对应的 patched KWin/Xwayland 包，并防止系统更新将它们覆盖。如果系统仓库中的版本更新，脚本会允许将相关包降级到本仓库的 patched 版本；已经 hold 的相关包也会在更新后重新设置 hold。
+`scripts/install-anland-kde.sh` 会自动识别当前发行版，选择最新的不可变 Anland KDE 包 Release，按压缩包中的 KWin 版本下载并校验对应的 patched KWin/Xwayland 包，然后防止系统更新将它们覆盖。二进制包不会再加入 Git 历史；每个包 Release 都包含 Arch、Debian 13、Ubuntu 26、Fedora 43 和 Fedora 44 的五个独立压缩包，文件名形如 `anland-kde-ubuntu2604-kwin-6.7.3-arm64.tar.gz`，并附带 `SHA256SUMS`。
 脚本会按 `LC_ALL`、`LC_MESSAGES`、`LANG` 的优先级读取系统语言：中文 locale 输出中文，其他 locale 输出英文。
 
 支持 Debian 13、Ubuntu 26.04、Fedora 43/44 和 Arch Linux，仅支持 ARM64/aarch64。Debian/Ubuntu 使用 `apt-mark hold`，Fedora 通过 `/etc/dnf/dnf.conf` 的 `exclude`，Arch 通过 pacman 的 `IgnorePkg` 实现等效锁定。
 
-在仓库根目录运行：
+从仓库根目录运行：
 
 ```bash
-sudo ./anland-build/install.sh
+sudo ./scripts/install-anland-kde.sh
+```
+
+也可以直接获取安装器：
+
+```bash
+curl -fLO https://raw.githubusercontent.com/Goldzxcbug/Droidspaces-rootfs-KDE-builder/main/scripts/install-anland-kde.sh
+chmod +x install-anland-kde.sh
+sudo ./install-anland-kde.sh
 ```
 
 推荐构建选项：
@@ -293,7 +301,7 @@ usb-storage-passthrough
 sudo ./scripts/install-usb-manager.sh --user "$USER"
 ```
 
-与 `anland-build/install.sh` 一样，该脚本支持自动提权、中文/英文日志、本地源码优先和缺失时下载上游源码快照。省略 `--user` 时会依次尝试 `SUDO_USER`、当前登录用户和第一个普通用户。
+与 `scripts/install-anland-kde.sh` 一样，该脚本支持自动提权、中文/英文日志。省略 `--user` 时会依次尝试 `SUDO_USER`、当前登录用户和第一个普通用户。
 
 ## 本地构建
 
@@ -395,6 +403,7 @@ sudo download-firmware
 │   ├── bashrc.sh
 │   ├── download-firmware
 │   ├── install-usb-manager.sh
+│   ├── install-anland-kde.sh
 │   ├── nosnap.sh
 │   ├── systemd257.sh
 │   ├── on_aaudio_socket.sh
@@ -402,21 +411,14 @@ sudo download-firmware
 ├── scripts/binfmt/
 │   ├── qemu-binfmt-register.service
 │   └── qemu-binfmt-register.sh
-├── anland-build/
-│   ├── install.sh
-│   ├── Arch/
-│   ├── Debian13/
-│   ├── Fedora43/
-│   ├── Fedora44/
-│   └── ubuntu2604/
 └── .github/workflows/
     ├── build-kde-wayland.yml
     ├── build-rootfs-releases-en.yml
-    ├──  build-rootfs-releases.yml
-    └── clear.yml
+    └── build-rootfs-releases.yml
 ```
 
-`anland-build/` 存放 patched KWin 和 Xwayland 预编译包以及一键安装脚本。`build-kde-wayland.yml` 可以重新构建这些包并提交回仓库。当前中文 RootFS workflow 文件名包含一个前导空格，路径为 `.github/workflows/ build-rootfs-releases.yml`。
+KDE 包只作为 GitHub Release 资产发布。手动运行 `build-kde-wayland.yml` 时，`build_target=all` 会固定一个 Anland 源提交并重新生成五个平台；若其中某个平台构建失败，工作流会从上一份完整 Release 沿用该平台的旧包，只更新成功的平台，并生成完整的不可变 Release 和新的 `SHA256SUMS`。这种部分更新的 Release 会同时含有本次构建包和沿用旧包，发布说明会逐项标记资产来源。选择单个平台时只重新构建该平台，并从上一份完整 Release 沿用其余四个压缩包。若没有可复用的完整 Release，或本次没有任何新包成功生成，工作流会失败且不会发布不完整或完全重复的 Release。它不会提交包、改写 `main`、覆盖旧包 Release 或删除其他 Release。
+没有可复用旧 Release 时，首次发布带版本号的包必须选择 `all` 并让五个平台全部成功；已有完整旧 Release 时，工作流可在部分平台失败后迁移旧资产并发布新的版本化资产。
 
 ## 已知限制
 

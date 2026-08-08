@@ -223,11 +223,11 @@ startplasmamobile
 
 ## Wayland and Anland Setup
 
-Wayland support depends on [anland](https://github.com/superturtlee/anland) and the patched KWin/Xwayland prebuilt packages stored in this repository. `Ubuntu-26-KDE` is recommended, while `Debian-13-KDE`, `Fedora-43-KDE`, `Fedora-44-KDE`, and `Arch-KDE` are also available. Arch rebuilds its packages in an ARM64 Arch container through `producers/kde/Arch_v5/build.sh` from the selected anland repository.
+Wayland support depends on [anland](https://github.com/superturtlee/anland) and patched KWin/Xwayland prebuilt packages published through GitHub Releases. `Ubuntu-26-KDE` is recommended, while `Debian-13-KDE`, `Fedora-43-KDE`, `Fedora-44-KDE`, and `Arch-KDE` are also available. Arch rebuilds its packages in an ARM64 Arch container through `producers/kde/Arch_v5/build.sh` from the selected anland repository.
 
-### One-Click Installation of anland-build Packages
+### One-Click Installation of Anland KDE Release Packages
 
-`anland-build/install.sh` automatically detects the current Linux distribution, installs the matching patched KWin/Xwayland packages, and prevents system updates from overwriting them. If the distribution repositories contain newer versions, the script allows the affected packages to be downgraded to the patched versions included in this repository. Packages that are already held can be updated and then placed on hold again.
+`scripts/install-anland-kde.sh` automatically detects the current Linux distribution, selects the latest immutable Anland KDE package Release, downloads and verifies the matching patched KWin/Xwayland packages by their KWin version, and prevents system updates from overwriting them. Binary packages are no longer added to Git history; every package Release contains five independent archives for Arch, Debian 13, Ubuntu 26, Fedora 43, and Fedora 44. Archive names include the KWin version, for example `anland-kde-ubuntu2604-kwin-6.7.3-arm64.tar.gz`, and each Release also contains `SHA256SUMS`.
 The script reads the system language in `LC_ALL`, `LC_MESSAGES`, and `LANG` priority order. Chinese locales produce Chinese messages; all other locales produce English messages.
 
 The installer supports Debian 13, Ubuntu 26.04, Fedora 43/44, and Arch Linux on ARM64/aarch64 only. Debian and Ubuntu use `apt-mark hold`, Fedora uses `exclude` entries in `/etc/dnf/dnf.conf`, and Arch uses pacman `IgnorePkg` entries for equivalent package locking.
@@ -235,7 +235,15 @@ The installer supports Debian 13, Ubuntu 26.04, Fedora 43/44, and Arch Linux on 
 Run it from the repository root:
 
 ```bash
-sudo ./anland-build/install.sh
+sudo ./scripts/install-anland-kde.sh
+```
+
+Or download the installer directly:
+
+```bash
+curl -fLO https://raw.githubusercontent.com/Goldzxcbug/Droidspaces-rootfs-KDE-builder/main/scripts/install-anland-kde.sh
+chmod +x install-anland-kde.sh
+sudo ./install-anland-kde.sh
 ```
 
 Recommended build options:
@@ -293,7 +301,7 @@ To install or update the application separately on an existing system, run this 
 sudo ./scripts/install-usb-manager.sh --user "$USER"
 ```
 
-Like `anland-build/install.sh`, this installer supports automatic privilege escalation, Chinese/English output, local-source preference, and an upstream source download fallback. If `--user` is omitted, it tries `SUDO_USER`, the logged-in user, and then the first regular user.
+Like `scripts/install-anland-kde.sh`, this installer supports automatic privilege escalation and Chinese/English output. If `--user` is omitted, it tries `SUDO_USER`, the logged-in user, and then the first regular user.
 
 ## Local Build
 
@@ -395,6 +403,7 @@ The script installs `zstd` and `linux-firmware`, so working package repositories
 │   ├── bashrc.sh
 │   ├── download-firmware
 │   ├── install-usb-manager.sh
+│   ├── install-anland-kde.sh
 │   ├── nosnap.sh
 │   ├── systemd257.sh
 │   ├── on_aaudio_socket.sh
@@ -402,21 +411,14 @@ The script installs `zstd` and `linux-firmware`, so working package repositories
 ├── scripts/binfmt/
 │   ├── qemu-binfmt-register.service
 │   └── qemu-binfmt-register.sh
-├── anland-build/
-│   ├── install.sh
-│   ├── Arch/
-│   ├── Debian13/
-│   ├── Fedora43/
-│   ├── Fedora44/
-│   └── ubuntu2604/
 └── .github/workflows/
     ├── build-kde-wayland.yml
     ├── build-rootfs-releases-en.yml
-    ├──  build-rootfs-releases.yml
-    └── clear.yml
+    └── build-rootfs-releases.yml
 ```
 
-`anland-build/` stores the patched KWin and Xwayland prebuilt packages together with the one-click installer. `build-kde-wayland.yml` can rebuild those packages and commit the updates back to the repository. The current Chinese RootFS workflow filename contains a leading space: `.github/workflows/ build-rootfs-releases.yml`.
+KDE packages are published only as GitHub Release assets. When running `build-kde-wayland.yml` manually, `build_target=all` pins one Anland source commit and rebuilds all five platforms. If one platform fails, the workflow reuses that platform's archive from the previous complete Release, updates only the successful platforms, and creates a new complete immutable Release with a new `SHA256SUMS`. Such a partial update Release contains both newly built and reused archives, and its notes identify the source of each asset. Selecting one platform rebuilds only that package and reuses the other four archives from the previous complete Release. If no complete Release can be reused, or no new package succeeds, the workflow fails without publishing an incomplete or fully duplicated Release. It never commits packages, rewrites `main`, overwrites an older package Release, or deletes other Releases.
+Without a reusable complete Release, the first versioned package Release must use `all` and all five platforms must succeed. With a complete older Release, the workflow can migrate reused assets to versioned archive names after a partial build.
 
 ## Known Limitations
 
