@@ -1053,13 +1053,49 @@ jobs:
 
             gitee_upload_attachment() {
               local asset_path="$1"
-              if ! gitee_status="$(gitee_write POST "$gitee_response_json" \
-                "$gitee_api/repos/$gitee_owner/$gitee_repo/releases/$gitee_release_id/attach_files" \
-                --form "file=@$asset_path")"; then
-                echo "上传 Gitee 附件失败：${asset_path##*/}" >&2
-                return 1
-              fi
-              require_gitee_success "$gitee_status" "$gitee_response_json"
+              local asset_name="${asset_path##*/}"
+              local attempt=1
+              local max_attempts=3
+
+              # 附件上传链路可能在 HTTP/2 或 Expect: 100-continue 协商时无响应；
+              # 超时后先检查服务端是否已实际接收该附件，避免重复上传。
+              while [ "$attempt" -le "$max_attempts" ]; do
+                gitee_status=''
+                if gitee_status="$(curl --silent --show-error --http1.1 \
+                  --connect-timeout 20 --max-time 180 --speed-time 60 --speed-limit 1024 \
+                  --request POST \
+                  --output "$gitee_response_json" --write-out '%{http_code}' \
+                  --header "Authorization: token ${GITEE_TOKEN}" \
+                  --header 'Accept: application/json' \
+                  --header 'Expect:' \
+                  --form "file=@${asset_path}" \
+                  "$gitee_api/repos/$gitee_owner/$gitee_repo/releases/$gitee_release_id/attach_files")" && \
+                    require_gitee_success "$gitee_status" "$gitee_response_json"; then
+                  return 0
+                fi
+
+                # 请求超时后服务端可能仍已写入附件，不能盲目重传。
+                if gitee_list_attachments && gitee_attachment_exists "$asset_name"; then
+                  echo "Gitee 已接收附件但未返回响应：$asset_name"
+                  return 0
+                fi
+
+                case "$gitee_status" in
+                  ''|000|408|429|5??|522|524)
+                    ;;
+                  *)
+                    echo "上传 Gitee 附件失败：$asset_name" >&2
+                    return 1
+                    ;;
+                esac
+                if [ "$attempt" -eq "$max_attempts" ]; then
+                  echo "上传 Gitee 附件失败：$asset_name" >&2
+                  return 1
+                fi
+                echo "Gitee 附件上传未完成，${attempt}/${max_attempts} 次后重试：$asset_name" >&2
+                sleep "$((attempt * 5))"
+                attempt=$((attempt + 1))
+              done
             }
 
             gitee_download_url_for_asset() {
