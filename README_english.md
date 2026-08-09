@@ -227,10 +227,10 @@ Wayland support depends on [anland](https://github.com/superturtlee/anland) and 
 
 ### One-Click Installation of Anland KDE Release Packages
 
-`scripts/install-anland-kde.sh` automatically detects the current Linux distribution, selects the latest immutable Anland KDE package Release, downloads and verifies the matching patched KWin/Xwayland packages by their KWin version, and prevents system updates from overwriting them. Binary packages are no longer added to Git history; every package Release contains five independent archives for Arch, Debian 13, Ubuntu 26, Fedora 43, and Fedora 44. Archive names include the KWin version, for example `anland-kde-ubuntu2604-kwin-6.7.3-arm64.tar.gz`, and each Release also contains `SHA256SUMS`.
+`scripts/install-anland-kde.sh` automatically detects the current Linux distribution, uses `anland-kde-manifest` from the fixed rolling Release `anland-kde-packages` to select the exact archive, downloads the patched KWin/Xwayland packages by their KWin version, and prevents system updates from overwriting them. Binary packages are no longer added to Git history; this Release contains five independent archives for Arch, Debian 13, Ubuntu 26, Fedora 43, and Fedora 44. Archive names include the KWin version, for example `anland-kde-ubuntu2604-kwin-6.7.3-arm64.tar.gz`.
 The script reads the system language in `LC_ALL`, `LC_MESSAGES`, and `LANG` priority order. Chinese locales produce Chinese messages; all other locales produce English messages.
 
-The installer supports Debian 13, Ubuntu 26.04, Fedora 43/44, and Arch Linux on ARM64/aarch64 only. Debian and Ubuntu use `apt-mark hold`, Fedora uses `exclude` entries in `/etc/dnf/dnf.conf`, and Arch uses pacman `IgnorePkg` entries for equivalent package locking.
+The installer supports Debian 13, Ubuntu 26.04, Fedora 43/44, and Arch Linux on ARM64/aarch64 only. It downloads, preflights, and extracts packages as the invoking user, then elevates only for installation. Debian and Ubuntu use installer-managed `apt-mark hold` state, Fedora uses a managed `excludepkgs` block in `/etc/dnf/dnf.conf`, and Arch uses pacman `IgnorePkg` entries for equivalent package locking.
 
 Run it from the repository root:
 
@@ -417,8 +417,7 @@ The script installs `zstd` and `linux-firmware`, so working package repositories
     └── build-rootfs-releases.yml
 ```
 
-KDE packages are published only as GitHub Release assets. When running `build-kde-wayland.yml` manually, `build_target=all` pins one Anland source commit and rebuilds all five platforms. If one platform fails, the workflow reuses that platform's archive from the previous complete Release, updates only the successful platforms, and creates a new complete immutable Release with a new `SHA256SUMS`. Such a partial update Release contains both newly built and reused archives, and its notes identify the source of each asset. Selecting one platform rebuilds only that package and reuses the other four archives from the previous complete Release. If no complete Release can be reused, or no new package succeeds, the workflow fails without publishing an incomplete or fully duplicated Release. It never commits packages, rewrites `main`, overwrites an older package Release, or deletes other Releases.
-Without a reusable complete Release, the first versioned package Release must use `all` and all five platforms must succeed. With a complete older Release, the workflow can migrate reused assets to versioned archive names after a partial build.
+KDE packages are published only as GitHub Release assets. When running `build-kde-wayland.yml` manually, `build_target=all` pins one Anland source commit and rebuilds all five platforms. If one platform fails, the workflow reuses that platform's archive from the fixed rolling Release, updates only the successful platforms, and rewrites the same `anland-kde-packages` Release with its archives and `anland-kde-manifest`. Selecting one platform rebuilds and replaces only that package; the other four archives remain unchanged. If the fixed Release cannot provide a complete five-platform set, or no new package succeeds, the workflow fails without updating the Release. It never commits packages or rewrites `main`; the fixed rolling Release is preserved.
 
 ## Known Limitations
 
