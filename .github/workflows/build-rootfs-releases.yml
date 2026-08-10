@@ -327,12 +327,12 @@ jobs:
 
       - name: 选择 Wayland 预编译包来源 (${{ matrix.template }})
         id: wayland_source
-        if: ${{ needs.setup.outputs.wayland_enabled == 'true' && github.repository != 'Goldzxcbug/Droidspaces-rootfs-KDE-builder' }}
+        if: ${{ needs.setup.outputs.wayland_enabled == 'true' && github.repository != 'mikugirls/Droidspaces-rootfs-KDE-builder' }}
         env:
           GH_TOKEN: ${{ github.token }}
           TEMPLATE: ${{ matrix.template }}
           OWN_REPOSITORY: ${{ github.repository }}
-          UPSTREAM_REPOSITORY: Goldzxcbug/Droidspaces-rootfs-KDE-builder
+          UPSTREAM_REPOSITORY: mikugirls/Droidspaces-rootfs-KDE-builder
           RELEASE_TAG: anland-kde-packages
           MANIFEST_NAME: anland-kde-manifest
         run: |
@@ -402,7 +402,7 @@ jobs:
 
       - name: 编译 RootFS (${{ matrix.template }})
         env:
-          ANLAND_KDE_RELEASE_REPOSITORY: ${{ steps.wayland_source.outputs.repository || 'Goldzxcbug/Droidspaces-rootfs-KDE-builder' }}
+          ANLAND_KDE_RELEASE_REPOSITORY: ${{ steps.wayland_source.outputs.repository || 'mikugirls/Droidspaces-rootfs-KDE-builder' }}
           ANLAND_KDE_RELEASE_TAG: ${{ needs.build-wayland-packages.outputs.release_tag }}
         run: |
           chmod +x build_rootfs-native.sh
