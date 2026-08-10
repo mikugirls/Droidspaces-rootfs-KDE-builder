@@ -315,7 +315,7 @@ validate_package_architecture() {
         pkg.tar.*)
             mapfile -t files < <(find "$PACKAGE_DIR" -maxdepth 1 -type f -name '*.pkg.tar.*' -print | sort)
             for file in "${files[@]}"; do
-                package_arch="$(pacman -Qp --qf '%a' "$file")"
+                package_arch="$(LC_ALL=C pacman -Qip "$file" | sed -n 's/^[[:space:]]*Architecture[[:space:]]*:[[:space:]]*//p')"
                 case "$package_arch" in aarch64|any) ;; *) return 1 ;; esac
             done
             ;;
@@ -408,7 +408,7 @@ clear_stale_apt_holds() {
     local -a current_packages=("$@") previous_packages=()
     local previous current keep
 
-    [[ -r "$APT_HOLD_STATE" ]] || return
+    [[ -r "$APT_HOLD_STATE" ]] || return 0
     mapfile -t previous_packages < <(sed -nE 's/^([a-z0-9][a-z0-9+.-]*)$/\1/p' "$APT_HOLD_STATE" | sort -u)
     for previous in "${previous_packages[@]}"; do
         keep=false
@@ -663,7 +663,7 @@ install_arch_packages() {
             END { exit found ? 0 : 1 }
         ' /etc/pacman.conf; then
             if grep -qE '^[[:space:]]*IgnorePkg[[:space:]]*=' /etc/pacman.conf; then
-                sed -i -E "0,/^[[:space:]]*IgnorePkg[[:space:]]*=/{s/$/ ${package}/}" /etc/pacman.conf
+                sed -i -E "0,/^[[:space:]]*IgnorePkg[[:space:]]*=/{s/^([[:space:]]*IgnorePkg[[:space:]]*=.*)$/\\1 ${package}/}" /etc/pacman.conf
             elif grep -qE '^\[options\][[:space:]]*$' /etc/pacman.conf; then
                 sed -i "/^\[options\][[:space:]]*$/a IgnorePkg = ${package}" /etc/pacman.conf
             else
